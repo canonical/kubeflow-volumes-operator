@@ -14,6 +14,7 @@ class KubeflowVolumesInputs:
     APP_SECURE_COOKIES: bool
     BACKEND_MODE: str
     VOLUME_VIEWER_IMAGE: str
+    METRICS: str
 
 
 class KubeflowVolumesPebbleService(PebbleServiceComponent):
@@ -39,6 +40,7 @@ class KubeflowVolumesPebbleService(PebbleServiceComponent):
                             "BACKEND_MODE": inputs.BACKEND_MODE,
                             "APP_PREFIX": "/volumes",
                             "VOLUME_VIEWER_IMAGE": inputs.VOLUME_VIEWER_IMAGE,
+                            "METRICS": inputs.METRICS,
                         },
                     }
                 }

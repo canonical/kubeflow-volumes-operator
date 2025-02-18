@@ -6,7 +6,11 @@ from pathlib import Path
 
 import pytest
 import yaml
-from charmed_kubeflow_chisme.testing import assert_logging, deploy_and_assert_grafana_agent
+from charmed_kubeflow_chisme.testing import (
+    assert_logging,
+    deploy_and_assert_grafana_agent,
+    assert_metrics_endpoint,
+)
 from pytest_operator.plugin import OpsTest
 
 # from random import choices
@@ -89,6 +93,17 @@ async def test_relate_dependencies(ops_test: OpsTest):
         raise_on_error=True,
         timeout=900,
     )
+
+
+async def test_metrics_enpoint(ops_test):
+    """Test metrics_endpoints are defined in relation data bag and their accessibility.
+
+    This function gets all the metrics_endpoints from the relation data bag, checks if
+    they are available from the grafana-agent-k8s charm and finally compares them with the
+    ones provided to the function.
+    """
+    app = ops_test.model.applications[CHARM_NAME]
+    await assert_metrics_endpoint(app, metrics_port=5000, metrics_path="/metrics")
 
 
 async def test_logging(ops_test: OpsTest):

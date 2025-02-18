@@ -18,3 +18,7 @@ options:
     type: string
     default: charmedkubeflow/filebrowser:2.27.0-f21fe9d
     description: Volume Viewer OCI Image (PVCViewer)
+  enable-metrics:
+    type: boolean
+    default: true
+    description: Whether metrics are exported by the web app
