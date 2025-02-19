@@ -56,7 +56,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
 
     # Deploying grafana-agent-k8s and add all relations
     await deploy_and_assert_grafana_agent(
-        ops_test.model, CHARM_NAME, metrics=False, dashboard=False, logging=True
+        ops_test.model, CHARM_NAME, metrics=True, dashboard=True, logging=True
     )
 
 
@@ -114,7 +114,7 @@ async def test_logging(ops_test: OpsTest):
     await assert_logging(app)
 
 
-async def test_grafana_dashboards(self, ops_test: OpsTest):
+async def test_grafana_dashboards(ops_test: OpsTest):
     """Test Grafana dashboards are defined in relation data bag."""
     app = ops_test.model.applications[CHARM_NAME]
     dashboards = get_grafana_dashboards()
