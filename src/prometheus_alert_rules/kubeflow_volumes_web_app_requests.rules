@@ -1,0 +1,43 @@
+groups:
+- name: KubeflowVolumesWebAppRequests
+  rules:
+  - alert: HighRequestRate
+    expr: rate(flask_http_request_total[2m]) > 1000
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High per-second request rate detected"
+      description: |
+       The request rate is over 1000 requests per second over the last 5 minutes on unit {{ $labels.juju_model }}/{{ $labels.juju_unit }}.
+       LABELS = {{ $labels }}
+  - alert: HighErrorRate
+    expr: rate(flask_http_request_total{status!="200"}[2m]) > 0.05
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "High error rate detected"
+      description: |
+      More than 5% of requests are failing with a status code different than 200 on unit {{ $labels.juju_model }}/{{ $labels.juju_unit }}.
+      LABELS = {{ $labels }}
+  - alert: SlowResponseTimeAtRootPath
+    expr: histogram_quantile(0.95, rate(flask_http_request_duration_seconds_bucket{url_rule="/"}[2m])) > 1
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Slow response time detected"
+      description: |
+      95th percentile of response time for root path requests is above 1 second on unit {{ $labels.juju_model }}/{{ $labels.juju_unit }}.
+      LABELS = {{ $labels }}
+  - alert: SlowResponseTimeAtNonRootPaths
+    expr: histogram_quantile(0.95, rate(flask_http_request_duration_seconds_bucket{url_rule="/<path:path>"}[2m])) > 1
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Slow response time detected"
+      description: |
+      95th percentile of response time for non-root path requests is above 1 second on unit {{ $labels.juju_model }}/{{ $labels.juju_unit }}.
+      LABELS = {{ $labels }}

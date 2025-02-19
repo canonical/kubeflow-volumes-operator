@@ -57,7 +57,7 @@
       "targets": [
         {
           "$$hashKey": "object:214",
-          "expr": "rate(flask_http_request_duration_seconds_count{status=\"200\"}[2m])",
+          "expr": "rate(flask_http_request_total{}[2m])",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
@@ -245,7 +245,7 @@
       "targets": [
         {
           "$$hashKey": "object:140",
-          "expr": "increase(flask_http_request_total[2m])",
+          "expr": "increase(flask_http_request_total[2m])/2",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
