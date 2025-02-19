@@ -8,8 +8,10 @@ import pytest
 import yaml
 from charmed_kubeflow_chisme.testing import (
     assert_logging,
-    deploy_and_assert_grafana_agent,
+    assert_grafana_dashboards,
     assert_metrics_endpoint,
+    deploy_and_assert_grafana_agent,
+    get_grafana_dashboards,
 )
 from pytest_operator.plugin import OpsTest
 
@@ -110,6 +112,14 @@ async def test_logging(ops_test: OpsTest):
     """Test logging is defined in relation data bag."""
     app = ops_test.model.applications[CHARM_NAME]
     await assert_logging(app)
+
+
+async def test_grafana_dashboards(self, ops_test: OpsTest):
+    """Test Grafana dashboards are defined in relation data bag."""
+    app = ops_test.model.applications[CHARM_NAME]
+    dashboards = get_grafana_dashboards()
+    log.info("found dashboards: %s", dashboards)
+    await assert_grafana_dashboards(app, dashboards)
 
 
 # # Disabled until we re-enable the selenium tests below

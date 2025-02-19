@@ -26,6 +26,7 @@ from charms.kubeflow_dashboard.v0.kubeflow_dashboard_links import (
 from charms.loki_k8s.v1.loki_push_api import LogForwarder
 from charms.observability_libs.v1.kubernetes_service_patch import KubernetesServicePatch
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
+from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from lightkube.models.core_v1 import ServicePort
 from lightkube.resources.core_v1 import ServiceAccount
 from lightkube.resources.rbac_authorization_v1 import ClusterRole, ClusterRoleBinding
@@ -84,6 +85,10 @@ class KubeflowVolumesOperator(CharmBase):
                 }
             ],
         )
+
+        # The dashboard is based on upstream example
+        # https://github.com/rycus86/prometheus_flask_exporter/blob/master/examples/sample-signals/grafana/dashboards/example.json
+        self.dashboard_provider = GrafanaDashboardProvider(self)
 
         # Charm logic
         self.charm_reconciler = CharmReconciler(self)
