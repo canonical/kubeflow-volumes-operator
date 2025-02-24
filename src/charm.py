@@ -149,7 +149,7 @@ class KubeflowVolumesOperator(CharmBase):
                     APP_SECURE_COOKIES=self.model.config["secure-cookies"],
                     BACKEND_MODE=self.model.config["backend-mode"],
                     VOLUME_VIEWER_IMAGE=self.model.config["volume-viewer-image"],
-                    METRICS=1 if self.model.config["enable-metrics"] else 0,
+                    METRICS="1" if self.model.config["enable-metrics"] else "0",
                 ),
             ),
             depends_on=[
