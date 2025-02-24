@@ -14,7 +14,7 @@ resources:
   oci-image:
     type: oci-image
     description: 'Backing OCI image'
-    upstream-source: docker.io/charmedkubeflow/volumes-web-app:1.9.0-287d9e9
+    upstream-source: docker.io/kubeflownotebookswg/volumes-web-app:v1.10.0-rc.0
 requires:
   ingress:
     interface: ingress
@@ -61,4 +61,8 @@ requires:
   logging:
     interface: loki_push_api
     optional: true
-
+provides:
+  metrics-endpoint:
+    interface: prometheus_scrape
+  grafana-dashboard:
+    interface: grafana_dashboard
