@@ -6,7 +6,13 @@ from pathlib import Path
 
 import pytest
 import yaml
-from charmed_kubeflow_chisme.testing import assert_logging, deploy_and_assert_grafana_agent
+from charmed_kubeflow_chisme.testing import (
+    assert_grafana_dashboards,
+    assert_logging,
+    assert_metrics_endpoint,
+    deploy_and_assert_grafana_agent,
+    get_grafana_dashboards,
+)
 from pytest_operator.plugin import OpsTest
 
 # from random import choices
@@ -50,7 +56,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
 
     # Deploying grafana-agent-k8s and add all relations
     await deploy_and_assert_grafana_agent(
-        ops_test.model, CHARM_NAME, metrics=False, dashboard=False, logging=True
+        ops_test.model, CHARM_NAME, metrics=True, dashboard=True, logging=True
     )
 
 
@@ -91,10 +97,29 @@ async def test_relate_dependencies(ops_test: OpsTest):
     )
 
 
+async def test_metrics_enpoint(ops_test):
+    """Test metrics_endpoints are defined in relation data bag and their accessibility.
+
+    This function gets all the metrics_endpoints from the relation data bag, checks if
+    they are available from the grafana-agent-k8s charm and finally compares them with the
+    ones provided to the function.
+    """
+    app = ops_test.model.applications[CHARM_NAME]
+    await assert_metrics_endpoint(app, metrics_port=5000, metrics_path="/metrics")
+
+
 async def test_logging(ops_test: OpsTest):
     """Test logging is defined in relation data bag."""
     app = ops_test.model.applications[CHARM_NAME]
     await assert_logging(app)
+
+
+async def test_grafana_dashboards(ops_test: OpsTest):
+    """Test Grafana dashboards are defined in relation data bag."""
+    app = ops_test.model.applications[CHARM_NAME]
+    dashboards = get_grafana_dashboards()
+    log.info("found dashboards: %s", dashboards)
+    await assert_grafana_dashboards(app, dashboards)
 
 
 # # Disabled until we re-enable the selenium tests below
