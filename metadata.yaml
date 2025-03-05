@@ -14,7 +14,7 @@ resources:
   oci-image:
     type: oci-image
     description: 'Backing OCI image'
-    upstream-source: docker.io/charmedkubeflow/volumes-web-app:1.10.0-rc.0-905cbbd
+    upstream-source: docker.io/charmedkubeflow/volumes-web-app:1.10.0-rc.1-0ce9b4c
 requires:
   ingress:
     interface: ingress
