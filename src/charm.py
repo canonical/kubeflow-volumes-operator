@@ -19,14 +19,12 @@ from charmed_kubeflow_chisme.components import (
     SdiRelationBroadcasterComponent,
 )
 from charmed_kubeflow_chisme.kubernetes import create_charm_default_labels
-from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.kubeflow_dashboard.v0.kubeflow_dashboard_links import (
     DashboardLink,
     KubeflowDashboardLinksRequirer,
 )
 from charms.loki_k8s.v1.loki_push_api import LogForwarder
 from charms.observability_libs.v1.kubernetes_service_patch import KubernetesServicePatch
-from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from lightkube.models.core_v1 import ServicePort
 from lightkube.resources.core_v1 import ServiceAccount
 from lightkube.resources.rbac_authorization_v1 import ClusterRole, ClusterRoleBinding
@@ -50,7 +48,6 @@ DASHBOARD_LINKS = [
         location="menu",
     )
 ]
-METRICS_PATH = "/metrics"  # Source https://github.com/kubeflow/kubeflow/blob/master/components/crud-web-apps/common/backend/kubeflow/kubeflow/crud_backend/metrics.py#L27  # noqa E501
 
 
 class KubeflowVolumesOperator(CharmBase):
@@ -74,24 +71,6 @@ class KubeflowVolumesOperator(CharmBase):
         self.service_patcher = KubernetesServicePatch(
             self, [http_port], service_name=f"{self.model.app.name}"
         )
-
-        if self.model.config["enable-metrics"]:
-            self.prometheus_provider = MetricsEndpointProvider(
-                charm=self,
-                relation_name="metrics-endpoint",
-                jobs=[
-                    {
-                        "metrics_path": METRICS_PATH,
-                        "static_configs": [
-                            {"targets": ["*:{}".format(self.model.config["port"])]}
-                        ],
-                    }
-                ],
-            )
-
-            # The dashboard is based on upstream example
-            # https://github.com/rycus86/prometheus_flask_exporter/blob/master/examples/sample-signals/grafana/dashboards/example.json
-            self.dashboard_provider = GrafanaDashboardProvider(self)
 
         # Charm logic
         self.charm_reconciler = CharmReconciler(self)
@@ -149,7 +128,6 @@ class KubeflowVolumesOperator(CharmBase):
                     APP_SECURE_COOKIES=self.model.config["secure-cookies"],
                     BACKEND_MODE=self.model.config["backend-mode"],
                     VOLUME_VIEWER_IMAGE=self.model.config["volume-viewer-image"],
-                    METRICS="1" if self.model.config["enable-metrics"] else "0",
                 ),
             ),
             depends_on=[

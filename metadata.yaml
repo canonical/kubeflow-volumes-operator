@@ -61,8 +61,4 @@ requires:
   logging:
     interface: loki_push_api
     optional: true
-provides:
-  metrics-endpoint:
-    interface: prometheus_scrape
-  grafana-dashboard:
-    interface: grafana_dashboard
+
