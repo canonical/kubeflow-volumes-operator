@@ -75,20 +75,23 @@ class KubeflowVolumesOperator(CharmBase):
             self, [http_port], service_name=f"{self.model.app.name}"
         )
 
-        self.prometheus_provider = MetricsEndpointProvider(
-            charm=self,
-            relation_name="metrics-endpoint",
-            jobs=[
-                {
-                    "metrics_path": METRICS_PATH,
-                    "static_configs": [{"targets": ["*:{}".format(self.model.config["port"])]}],
-                }
-            ],
-        )
+        if self.model.config["enable-metrics"]:
+            self.prometheus_provider = MetricsEndpointProvider(
+                charm=self,
+                relation_name="metrics-endpoint",
+                jobs=[
+                    {
+                        "metrics_path": METRICS_PATH,
+                        "static_configs": [
+                            {"targets": ["*:{}".format(self.model.config["port"])]}
+                        ],
+                    }
+                ],
+            )
 
-        # The dashboard is based on upstream example
-        # https://github.com/rycus86/prometheus_flask_exporter/blob/master/examples/sample-signals/grafana/dashboards/example.json
-        self.dashboard_provider = GrafanaDashboardProvider(self)
+            # The dashboard is based on upstream example
+            # https://github.com/rycus86/prometheus_flask_exporter/blob/master/examples/sample-signals/grafana/dashboards/example.json
+            self.dashboard_provider = GrafanaDashboardProvider(self)
 
         # Charm logic
         self.charm_reconciler = CharmReconciler(self)
@@ -146,7 +149,7 @@ class KubeflowVolumesOperator(CharmBase):
                     APP_SECURE_COOKIES=self.model.config["secure-cookies"],
                     BACKEND_MODE=self.model.config["backend-mode"],
                     VOLUME_VIEWER_IMAGE=self.model.config["volume-viewer-image"],
-                    METRICS="1",
+                    METRICS="1" if self.model.config["enable-metrics"] else "0",
                 ),
             ),
             depends_on=[
