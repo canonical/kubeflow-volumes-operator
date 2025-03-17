@@ -72,32 +72,30 @@ jobs:
           # Requires the model to be called kubeflow due to this bug:
           # https://github.com/kubeflow/kubeflow/issues/6136
           juju add-model kubeflow
-          sg snap_microk8s -c "tox -e integration -- --model kubeflow"
+          tox -e integration -- --model kubeflow
 
-      - run: sg snap_microk8s -c "microk8s.kubectl get all -A"
+      - run: kubectl get all -A
         if: failure()
 
-      - run: sg snap_microk8s -c "microk8s.kubectl get pods -A -oyaml"
+      - run: kubectl get pods -A -oyaml
         if: failure()
 
       - run: juju status
         if: failure()
 
       - name: Get kubeflow-volumes workload logs
-        run: sg snap_microk8s -c "microk8s.kubectl logs --tail 100 -nkubeflow -ljuju-app=kubeflow-volumes"
+        run: kubectl logs --tail 100 -nkubeflow -ljuju-app=kubeflow-volumes
         if: failure()
 
       - name: Get kubeflow-volumes operator logs
-        run: sg snap_microk8s -c "microk8s.kubectl logs --tail 100 -nkubeflow -ljuju-operator=kubeflow-volumes"
+        run: kubectl logs --tail 100 -nkubeflow -ljuju-operator=kubeflow-volumes
         if: failure()
 
       - name: Generate inspect tarball
         run: >
-          sg snap_microk8s <<EOF
-            microk8s inspect | \
-            grep -Po "Report tarball is at \K.+" | \
-            xargs -I {} cp {} inspection-report-${{ strategy.job-index }}.tar.gz
-          EOF
+          sudo microk8s inspect |
+          grep -Po "Report tarball is at \K.+" |
+          sudo xargs -I {} mv {} inspection-report-${{ strategy.job-index }}.tar.gz
         if: failure()
 
       - name: Upload inspect tarball
