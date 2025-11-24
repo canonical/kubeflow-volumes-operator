@@ -13,7 +13,18 @@ from charm import KubeflowVolumesOperator
 
 @pytest.fixture
 def harness():
-    return Harness(KubeflowVolumesOperator)
+    """Returns a Harness for the KubeflowVolumesOperator charm."""
+    harness = Harness(KubeflowVolumesOperator)
+
+    # set model name to avoid validation errors
+    harness.set_model_name("kubeflow")
+
+    # set leader by default
+    harness.set_leader(True)
+
+    yield harness
+
+    harness.cleanup()
 
 
 @pytest.fixture()
@@ -52,6 +63,7 @@ def test_log_forwarding(harness, mocked_lightkube_client, mocked_kubernetes_serv
 
 def test_not_leader(harness, mocked_lightkube_client, mocked_kubernetes_service_patch):
     """Test when we are not the leader."""
+    harness.set_leader(False)
     harness.begin_with_initial_hooks()
     # Assert that we are not Active, and that the leadership-gate is the cause.
     assert not isinstance(harness.charm.model.unit.status, ActiveStatus)
