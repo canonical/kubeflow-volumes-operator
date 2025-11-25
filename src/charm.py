@@ -19,7 +19,7 @@ from charmed_kubeflow_chisme.components import (
     SdiRelationBroadcasterComponent,
 )
 from charmed_kubeflow_chisme.kubernetes import create_charm_default_labels
-from charms.istio_beacon_k8s.v0.service_mesh import AppPolicy, Endpoint, ServiceMeshConsumer
+from charms.istio_beacon_k8s.v0.service_mesh import ServiceMeshConsumer
 from charms.istio_ingress_k8s.v0.istio_ingress_route import (
     BackendRef,
     HTTPPathMatch,

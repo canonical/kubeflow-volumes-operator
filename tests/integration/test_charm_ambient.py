@@ -7,13 +7,7 @@ from pathlib import Path
 import pytest
 import yaml
 from charmed_kubeflow_chisme.testing import assert_logging, deploy_and_assert_grafana_agent
-from charms_dependencies import (
-    ISTIO_BEACON_K8S,
-    ISTIO_INGRESS_K8S,
-    ISTIO_K8S,
-    KUBEFLOW_DASHBOARD,
-    KUBEFLOW_PROFILES,
-)
+from charms_dependencies import ISTIO_BEACON_K8S, ISTIO_INGRESS_K8S, ISTIO_K8S
 from pytest_operator.plugin import OpsTest
 
 log = logging.getLogger(__name__)
@@ -87,11 +81,14 @@ async def test_deploy_and_relate_dependencies(ops_test: OpsTest):
 
     # await ops_test.model.integrate(KUBEFLOW_DASHBOARD.charm, KUBEFLOW_PROFILES.charm)
     # await ops_test.model.integrate(
-    #     f"{ISTIO_INGRESS_K8S.charm}:istio-ingress-route", f"{KUBEFLOW_DASHBOARD.charm}:istio-ingress-route"
+    #     f"{ISTIO_INGRESS_K8S.charm}:istio-ingress-route",
+    #     f"{KUBEFLOW_DASHBOARD.charm}:istio-ingress-route"
     # )
-    # await ops_test.model.integrate(f"{ISTIO_BEACON_K8S.charm}:service-mesh", f"{KUBEFLOW_DASHBOARD.charm}:service-mesh")
+    # await ops_test.model.integrate(f"{ISTIO_BEACON_K8S.charm}:service-mesh",
+    # f"{KUBEFLOW_DASHBOARD.charm}:service-mesh")
 
-    # await ops_test.model.integrate(f"{KUBEFLOW_DASHBOARD.charm}:dashboard-links", f"{CHARM_NAME}:dashboard-links")
+    # await ops_test.model.integrate(f"{KUBEFLOW_DASHBOARD.charm}:dashboard-links",
+    # f"{CHARM_NAME}:dashboard-links")
 
     # raise_on_blocked=False to avoid flakiness due to kubeflow-dashboard going to
     # Blocked((install) Add required relation to kubeflow-profiles) although it has been added
