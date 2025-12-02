@@ -4,11 +4,9 @@
 import logging
 from pathlib import Path
 
-import aiohttp
-import lightkube
 import pytest
 import yaml
-from charmed_kubeflow_chisme.testing import assert_logging, deploy_and_assert_grafana_agent
+from charmed_kubeflow_chisme.testing import assert_logging, deploy_and_assert_grafana_agent, deploy_and_integrate_service_mesh_charms, assert_path_reachable_through_ingress
 from charms_dependencies import ISTIO_BEACON_K8S, ISTIO_INGRESS_K8S, ISTIO_K8S
 from pytest_operator.plugin import OpsTest
 
@@ -20,6 +18,7 @@ CHARM_NAME = METADATA["name"]
 HEADERS = {
     "kubeflow-userid": "",
 }
+
 
 
 @pytest.mark.abort_on_fail
@@ -45,31 +44,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
 
 @pytest.mark.abort_on_fail
 async def test_deploy_and_relate_dependencies(ops_test: OpsTest):
-    await ops_test.model.deploy(
-        ISTIO_K8S.charm,
-        channel=ISTIO_K8S.channel,
-        trust=ISTIO_K8S.trust,
-    )
-
-    await ops_test.model.deploy(
-        ISTIO_INGRESS_K8S.charm,
-        channel=ISTIO_INGRESS_K8S.channel,
-        trust=ISTIO_INGRESS_K8S.trust,
-    )
-
-    await ops_test.model.deploy(
-        ISTIO_BEACON_K8S.charm,
-        channel=ISTIO_BEACON_K8S.channel,
-        trust=ISTIO_BEACON_K8S.trust,
-    )
-
-    await ops_test.model.integrate(
-        f"{ISTIO_INGRESS_K8S.charm}:istio-ingress-route", f"{CHARM_NAME}:istio-ingress-route"
-    )
-
-    await ops_test.model.integrate(
-        f"{ISTIO_BEACON_K8S.charm}:service-mesh", f"{CHARM_NAME}:service-mesh"
-    )
+    await deploy_and_integrate_service_mesh_charms(CHARM_NAME, ops_test.model)
 
     # await ops_test.model.deploy(
     #     KUBEFLOW_DASHBOARD.charm,
@@ -95,11 +70,6 @@ async def test_deploy_and_relate_dependencies(ops_test: OpsTest):
 
     # raise_on_blocked=False to avoid flakiness due to kubeflow-dashboard going to
     # Blocked((install) Add required relation to kubeflow-profiles) although it has been added
-    await ops_test.model.wait_for_idle(
-        raise_on_blocked=False,
-        raise_on_error=True,
-        timeout=900,
-    )
 
 
 async def test_logging(ops_test: OpsTest):
@@ -108,42 +78,12 @@ async def test_logging(ops_test: OpsTest):
     await assert_logging(app)
 
 
-async def fetch_response(url, headers=None):
-    """Fetch provided URL and return tuple - status, text, and content-type (int, str, str)."""
-    result_status = 0
-    result_text = ""
-    content_type = ""
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
-            result_status = response.status
-            result_text = await response.text()
-            content_type = response.headers.get("Content-Type", "")
-    return result_status, str(result_text), content_type
-
-
-async def get_gateway_ip(ops_test: OpsTest, service_name: str = "istio-ingress-k8s-istio"):
-    """Return the gateway IP address of the istio ingress gateway service."""
-    client = lightkube.Client()
-
-    gateway_svc = client.get(
-        lightkube.resources.core_v1.Service,
-        name=service_name,
-        namespace=ops_test.model_name,
-    )
-
-    return gateway_svc.status.loadBalancer.ingress[0].ip
-
-
 @pytest.mark.abort_on_fail
 async def test_ui_is_accessible(ops_test: OpsTest):
     """Verify that UI is accessible through the ingress gateway."""
-    ingress_ip = await get_gateway_ip(ops_test)
-
-    # obtain status, text, and content type from fetching the volumes UI through the ingress gateway
-    result_status, result_text, content_type = await fetch_response(
-        f"http://{ingress_ip}/volumes/", HEADERS
+    await assert_path_reachable_through_ingress(
+        http_path="/volumes",
+        namespace=ops_test.model.name,
+        headers=HEADERS,
+        expected_content_type="text/html",
     )
-
-    assert result_status == 200
-    assert len(result_text) > 0
-    assert "text/html" in content_type
