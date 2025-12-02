@@ -49,6 +49,11 @@ async def test_build_and_deploy(ops_test: OpsTest):
 async def test_deploy_and_relate_dependencies(ops_test: OpsTest):
     await deploy_and_integrate_service_mesh_charms(CHARM_NAME, ops_test.model)
 
+    # Commenting out kubeflow-dashboard and kubeflow-profiles deployment and relation
+    # until they are integrated with ambient
+    # TODO uncomment when https://github.com/canonical/kubeflow-dashboard-operator/issues/303
+    # and https://github.com/canonical/kubeflow-profiles-operator/issues/272 are closed
+    #
     # await ops_test.model.deploy(
     #     KUBEFLOW_DASHBOARD.charm,
     #     channel=KUBEFLOW_DASHBOARD.channel,
