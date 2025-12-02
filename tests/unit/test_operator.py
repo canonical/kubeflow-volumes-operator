@@ -63,14 +63,24 @@ def render_ingress_data(service, port) -> dict:
     }
 
 
-def test_log_forwarding(harness, mocked_lightkube_client, mocked_kubernetes_service_patch, mocked_istio_ingress_requirer):
+def test_log_forwarding(
+    harness,
+    mocked_lightkube_client,
+    mocked_kubernetes_service_patch,
+    mocked_istio_ingress_requirer,
+):
     """Test LogForwarder initialization."""
     with patch("charm.LogForwarder") as mock_logging:
         harness.begin()
         mock_logging.assert_called_once_with(charm=harness.charm)
 
 
-def test_not_leader(harness, mocked_lightkube_client, mocked_kubernetes_service_patch, mocked_istio_ingress_requirer):
+def test_not_leader(
+    harness,
+    mocked_lightkube_client,
+    mocked_kubernetes_service_patch,
+    mocked_istio_ingress_requirer,
+):
     """Test when we are not the leader."""
     harness.set_leader(False)
     harness.begin_with_initial_hooks()
@@ -80,7 +90,10 @@ def test_not_leader(harness, mocked_lightkube_client, mocked_kubernetes_service_
 
 
 def test_kubernetes_created_method(
-    harness, mocked_lightkube_client, mocked_kubernetes_service_patch, mocked_istio_ingress_requirer
+    harness,
+    mocked_lightkube_client,
+    mocked_kubernetes_service_patch,
+    mocked_istio_ingress_requirer,
 ):
     """Test whether we try to create Kubernetes resources when we have leadership."""
     # Arrange
@@ -105,7 +118,10 @@ def test_kubernetes_created_method(
 
 
 def test_ambient_ingress_component_active(
-    harness, mocked_lightkube_client, mocked_kubernetes_service_patch, mocked_istio_ingress_requirer
+    harness,
+    mocked_lightkube_client,
+    mocked_kubernetes_service_patch,
+    mocked_istio_ingress_requirer,
 ):
     """Test that the ambient ingress component goes active when leadership gate is active."""
     # Arrange
@@ -125,7 +141,10 @@ def test_ambient_ingress_component_active(
 
 
 def test_ambient_ingress_component_blocked_on_error(
-    harness, mocked_lightkube_client, mocked_kubernetes_service_patch, mocked_istio_ingress_requirer
+    harness,
+    mocked_lightkube_client,
+    mocked_kubernetes_service_patch,
+    mocked_istio_ingress_requirer,
 ):
     """Test that the ambient ingress component goes blocked if config submission fails."""
     # Arrange
@@ -134,7 +153,7 @@ def test_ambient_ingress_component_blocked_on_error(
 
     # Mock leadership_gate to be active
     harness.charm.leadership_gate.get_status = MagicMock(return_value=ActiveStatus())
-    
+
     # Mock submit_config to raise an exception
     mocked_istio_ingress_requirer.return_value.submit_config.side_effect = Exception("Test error")
 
@@ -149,7 +168,10 @@ def test_ambient_ingress_component_blocked_on_error(
 
 
 def test_ingress_relation_with_related_app(
-    harness, mocked_lightkube_client, mocked_kubernetes_service_patch, mocked_istio_ingress_requirer
+    harness,
+    mocked_lightkube_client,
+    mocked_kubernetes_service_patch,
+    mocked_istio_ingress_requirer,
 ):
     """Test that the kubeflow-volumes relation sends data to related apps and goes Active."""
     # Arrange
@@ -191,7 +213,10 @@ def assert_relation_data_send_as_expected(harness, expected_relation_data, rel_i
 
 
 def test_pebble_services_running(
-    harness, mocked_lightkube_client, mocked_kubernetes_service_patch, mocked_istio_ingress_requirer
+    harness,
+    mocked_lightkube_client,
+    mocked_kubernetes_service_patch,
+    mocked_istio_ingress_requirer,
 ):
     """Test that if the Kubernetes Component is Active, the pebble services successfully start."""
     # Arrange
@@ -222,55 +247,73 @@ def test_pebble_services_running(
 
 
 def test_istio_relations_conflict_detector_no_relations(
-    harness, mocked_lightkube_client, mocked_kubernetes_service_patch, mocked_istio_ingress_requirer
+    harness,
+    mocked_lightkube_client,
+    mocked_kubernetes_service_patch,
+    mocked_istio_ingress_requirer,
 ):
     """Test conflict detector when no relations are present."""
     # Arrange & Act
     harness.begin()
-    
+
     # Assert
-    assert isinstance(harness.charm.istio_relations_conflict_detector.component.get_status(), ActiveStatus)
+    assert isinstance(
+        harness.charm.istio_relations_conflict_detector.component.get_status(), ActiveStatus
+    )
 
 
 def test_istio_relations_conflict_detector_only_ambient(
-    harness, mocked_lightkube_client, mocked_kubernetes_service_patch, mocked_istio_ingress_requirer
+    harness,
+    mocked_lightkube_client,
+    mocked_kubernetes_service_patch,
+    mocked_istio_ingress_requirer,
 ):
     """Test conflict detector when only ambient relation is present."""
     # Arrange
     harness.begin()
-    
+
     # Act - Add only ambient relation
     harness.add_relation("istio-ingress-route", "istio-ingress")
-    
+
     # Assert
-    assert isinstance(harness.charm.istio_relations_conflict_detector.component.get_status(), ActiveStatus)
+    assert isinstance(
+        harness.charm.istio_relations_conflict_detector.component.get_status(), ActiveStatus
+    )
 
 
 def test_istio_relations_conflict_detector_only_sidecar(
-    harness, mocked_lightkube_client, mocked_kubernetes_service_patch, mocked_istio_ingress_requirer
+    harness,
+    mocked_lightkube_client,
+    mocked_kubernetes_service_patch,
+    mocked_istio_ingress_requirer,
 ):
     """Test conflict detector when only sidecar relation is present."""
     # Arrange
     harness.begin()
-    
+
     # Act - Add only sidecar relation
     harness.add_relation("ingress", "istio-pilot")
-    
+
     # Assert
-    assert isinstance(harness.charm.istio_relations_conflict_detector.component.get_status(), ActiveStatus)
+    assert isinstance(
+        harness.charm.istio_relations_conflict_detector.component.get_status(), ActiveStatus
+    )
 
 
 def test_istio_relations_conflict_detector_both_relations(
-    harness, mocked_lightkube_client, mocked_kubernetes_service_patch, mocked_istio_ingress_requirer
+    harness,
+    mocked_lightkube_client,
+    mocked_kubernetes_service_patch,
+    mocked_istio_ingress_requirer,
 ):
     """Test conflict detector when both relations are present - should be blocked."""
     # Arrange
     harness.begin()
-    
+
     # Act - Add both relations
     harness.add_relation("istio-ingress-route", "istio-ingress")
     harness.add_relation("ingress", "istio-pilot")
-    
+
     # Assert
     status = harness.charm.istio_relations_conflict_detector.component.get_status()
     assert isinstance(status, BlockedStatus)

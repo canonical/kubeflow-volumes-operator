@@ -15,7 +15,7 @@ from charms.istio_ingress_k8s.v0.istio_ingress_route import (
     URLRewriteFilter,
     URLRewriteSpec,
 )
-from ops import ActiveStatus, BlockedStatus, CharmBase
+from ops import ActiveStatus, BlockedStatus
 
 
 class AmbientIngressRequirerComponent(Component):
@@ -86,7 +86,5 @@ class AmbientIngressRequirerComponent(Component):
         try:
             self.ingress.submit_config(self._config)
         except Exception as e:
-            return BlockedStatus(
-                f"Failed to submit ingress config: {e}"
-            )
+            return BlockedStatus(f"Failed to submit ingress config: {e}")
         return ActiveStatus()

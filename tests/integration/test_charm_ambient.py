@@ -6,8 +6,12 @@ from pathlib import Path
 
 import pytest
 import yaml
-from charmed_kubeflow_chisme.testing import assert_logging, deploy_and_assert_grafana_agent, deploy_and_integrate_service_mesh_charms, assert_path_reachable_through_ingress
-from charms_dependencies import ISTIO_BEACON_K8S, ISTIO_INGRESS_K8S, ISTIO_K8S
+from charmed_kubeflow_chisme.testing import (
+    assert_logging,
+    assert_path_reachable_through_ingress,
+    deploy_and_assert_grafana_agent,
+    deploy_and_integrate_service_mesh_charms,
+)
 from pytest_operator.plugin import OpsTest
 
 log = logging.getLogger(__name__)
@@ -18,7 +22,6 @@ CHARM_NAME = METADATA["name"]
 HEADERS = {
     "kubeflow-userid": "",
 }
-
 
 
 @pytest.mark.abort_on_fail
