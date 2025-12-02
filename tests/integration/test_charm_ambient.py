@@ -4,6 +4,8 @@
 import logging
 from pathlib import Path
 
+import aiohttp
+import lightkube
 import pytest
 import yaml
 from charmed_kubeflow_chisme.testing import assert_logging, deploy_and_assert_grafana_agent
@@ -15,6 +17,9 @@ log = logging.getLogger(__name__)
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 CONFIG_MAP = "volumes-web-app-viewer-spec-ck6bhh4bdm"
 CHARM_NAME = METADATA["name"]
+HEADERS = {
+    "kubeflow-userid": "",
+}
 
 
 @pytest.mark.abort_on_fail
@@ -48,14 +53,12 @@ async def test_deploy_and_relate_dependencies(ops_test: OpsTest):
 
     await ops_test.model.deploy(
         ISTIO_INGRESS_K8S.charm,
-        application_name=ISTIO_INGRESS_K8S.charm,
         channel=ISTIO_INGRESS_K8S.channel,
         trust=ISTIO_INGRESS_K8S.trust,
     )
 
     await ops_test.model.deploy(
         ISTIO_BEACON_K8S.charm,
-        application_name=ISTIO_BEACON_K8S.charm,
         channel=ISTIO_BEACON_K8S.channel,
         trust=ISTIO_BEACON_K8S.trust,
     )
@@ -103,3 +106,44 @@ async def test_logging(ops_test: OpsTest):
     """Test logging is defined in relation data bag."""
     app = ops_test.model.applications[CHARM_NAME]
     await assert_logging(app)
+
+
+async def fetch_response(url, headers=None):
+    """Fetch provided URL and return tuple - status, text, and content-type (int, str, str)."""
+    result_status = 0
+    result_text = ""
+    content_type = ""
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as response:
+            result_status = response.status
+            result_text = await response.text()
+            content_type = response.headers.get("Content-Type", "")
+    return result_status, str(result_text), content_type
+
+
+async def get_gateway_ip(ops_test: OpsTest, service_name: str = "istio-ingress-k8s-istio"):
+    """Return the gateway IP address of the istio ingress gateway service."""
+    client = lightkube.Client()
+
+    gateway_svc = client.get(
+        lightkube.resources.core_v1.Service,
+        name=service_name,
+        namespace=ops_test.model_name,
+    )
+
+    return gateway_svc.status.loadBalancer.ingress[0].ip
+
+
+@pytest.mark.abort_on_fail
+async def test_ui_is_accessible(ops_test: OpsTest):
+    """Verify that UI is accessible through the ingress gateway."""
+    ingress_ip = await get_gateway_ip(ops_test)
+
+    # obtain status, text, and content type from fetching the volumes UI through the ingress gateway
+    result_status, result_text, content_type = await fetch_response(
+        f"http://{ingress_ip}/volumes/", HEADERS
+    )
+
+    assert result_status == 200
+    assert len(result_text) > 0
+    assert "text/html" in content_type
