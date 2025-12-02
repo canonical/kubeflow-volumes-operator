@@ -3,7 +3,6 @@ from charms.istio_beacon_k8s.v0.service_mesh import ServiceMeshConsumer
 from charms.istio_ingress_k8s.v0.istio_ingress_route import (
     BackendRef,
     HTTPPathMatch,
-    HTTPPathMatchType,
     HTTPRoute,
     HTTPRouteMatch,
     IstioIngressRouteConfig,
@@ -59,13 +58,7 @@ class AmbientIngressRequirerComponent(Component):
                 HTTPRoute(
                     name="http-route",
                     listener=http_listener,
-                    matches=[
-                        HTTPRouteMatch(
-                            path=HTTPPathMatch(
-                                type=HTTPPathMatchType.PathPrefix, value=self.path_prefix
-                            ),
-                        )
-                    ],
+                    matches=[HTTPRouteMatch(path=HTTPPathMatch(value=self.path_prefix))],
                     filters=[
                         URLRewriteFilter(
                             urlRewrite=URLRewriteSpec(
