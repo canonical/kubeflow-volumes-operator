@@ -300,58 +300,30 @@ def test_pebble_services_running(
     assert environment["VOLUME_VIEWER_IMAGE"] == harness.charm.config.get("volume-viewer-image")
 
 
-def test_istio_relations_conflict_detector_no_relations(
+@pytest.mark.parametrize(
+    "add_ambient,add_sidecar",
+    [
+        (False, False),  # no relations
+        (True, False),  # only ambient
+        (False, True),  # only sidecar
+    ],
+)
+def test_istio_relations_conflict_detector_active(
     harness,
     mocked_lightkube_client,
     mocked_kubernetes_service_patch,
     mocked_istio_ingress_requirer,
+    add_ambient,
+    add_sidecar,
 ):
-    """Test conflict detector when no relations are present."""
-    # Arrange & Act
+    """Test conflict detector returns ActiveStatus when no conflict exists."""
     harness.begin()
-
-    # Assert
-    assert isinstance(
-        harness.charm.istio_relations_conflict_detector.component.get_status(), ActiveStatus
-    )
-
-
-def test_istio_relations_conflict_detector_only_ambient(
-    harness,
-    mocked_lightkube_client,
-    mocked_kubernetes_service_patch,
-    mocked_istio_ingress_requirer,
-):
-    """Test conflict detector when only ambient relation is present."""
-    # Arrange
-    harness.begin()
-
-    # Act - Add only ambient relation
-    harness.add_relation("istio-ingress-route", "istio-ingress")
-
-    # Assert
-    assert isinstance(
-        harness.charm.istio_relations_conflict_detector.component.get_status(), ActiveStatus
-    )
-
-
-def test_istio_relations_conflict_detector_only_sidecar(
-    harness,
-    mocked_lightkube_client,
-    mocked_kubernetes_service_patch,
-    mocked_istio_ingress_requirer,
-):
-    """Test conflict detector when only sidecar relation is present."""
-    # Arrange
-    harness.begin()
-
-    # Act - Add only sidecar relation
-    harness.add_relation("ingress", "istio-pilot")
-
-    # Assert
-    assert isinstance(
-        harness.charm.istio_relations_conflict_detector.component.get_status(), ActiveStatus
-    )
+    if add_ambient:
+        harness.add_relation("istio-ingress-route", "istio-ingress")
+    if add_sidecar:
+        harness.add_relation("ingress", "istio-pilot")
+    status = harness.charm.istio_relations_conflict_detector.component.get_status()
+    assert isinstance(status, ActiveStatus)
 
 
 def test_istio_relations_conflict_detector_both_relations(
