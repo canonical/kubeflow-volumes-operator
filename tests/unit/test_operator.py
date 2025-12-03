@@ -98,7 +98,6 @@ def test_kubernetes_created_method(
     """Test whether we try to create Kubernetes resources when we have leadership."""
     # Arrange
     # Needed because kubernetes component will only apply to k8s if we are the leader
-    harness.set_leader(True)
     harness.begin()
 
     # Need to mock the leadership-gate to be active, and the kubernetes auth component so that it
@@ -123,48 +122,104 @@ def test_ambient_ingress_component_active(
     mocked_kubernetes_service_patch,
     mocked_istio_ingress_requirer,
 ):
-    """Test that the ambient ingress component goes active when leadership gate is active."""
+    """Test that ambient ingress component returns ActiveStatus when leader and ingress ready."""
     # Arrange
-    harness.set_leader(True)
     harness.begin()
 
-    # Mock leadership_gate to be active
-    harness.charm.leadership_gate.get_status = MagicMock(return_value=ActiveStatus())
+    # Mock ingress.is_ready() to return True
+    mocked_istio_ingress_requirer.return_value.is_ready.return_value = True
 
     # Act
-    harness.charm.on.install.emit()
+    status = harness.charm.ambient_ingress_relation.component.get_status()
 
     # Assert
-    assert isinstance(harness.charm.ambient_ingress_relation.status, ActiveStatus)
-    # Verify that submit_config was called
-    mocked_istio_ingress_requirer.return_value.submit_config.assert_called()
+    assert isinstance(status, ActiveStatus)
 
 
-def test_ambient_ingress_component_blocked_on_error(
+def test_ambient_ingress_component_blocked_when_not_leader(
     harness,
     mocked_lightkube_client,
     mocked_kubernetes_service_patch,
     mocked_istio_ingress_requirer,
 ):
-    """Test that the ambient ingress component goes blocked if config submission fails."""
+    """Test that the ambient ingress component returns BlockedStatus when not leader."""
     # Arrange
-    harness.set_leader(True)
+    harness.set_leader(False)
     harness.begin()
 
-    # Mock leadership_gate to be active
-    harness.charm.leadership_gate.get_status = MagicMock(return_value=ActiveStatus())
-
-    # Mock submit_config to raise an exception
-    mocked_istio_ingress_requirer.return_value.submit_config.side_effect = Exception("Test error")
+    # Mock ingress.is_ready() to return True
+    mocked_istio_ingress_requirer.return_value.is_ready.return_value = True
 
     # Act
-    harness.charm.on.install.emit()
+    status = harness.charm.ambient_ingress_relation.component.get_status()
 
     # Assert
-    status = harness.charm.ambient_ingress_relation.status
     assert isinstance(status, BlockedStatus)
-    assert "Failed to submit ingress config" in status.message
-    assert "Test error" in status.message
+    assert "Unable to configure ingress, not the leader." in status.message
+
+
+def test_ambient_ingress_configure_app_leader_success(
+    harness,
+    mocked_lightkube_client,
+    mocked_kubernetes_service_patch,
+    mocked_istio_ingress_requirer,
+):
+    """Test that _configure_app_leader submits config when ingress is ready."""
+    # Arrange
+    harness.begin()
+
+    # Mock ingress.is_ready() to return True
+    mocked_istio_ingress_requirer.return_value.is_ready.return_value = True
+
+    # Act
+    harness.charm.ambient_ingress_relation.component._configure_app_leader(None)
+
+    # Assert
+    mocked_istio_ingress_requirer.return_value.submit_config.assert_called_once()
+
+
+def test_ambient_ingress_configure_app_leader_not_ready(
+    harness,
+    mocked_lightkube_client,
+    mocked_kubernetes_service_patch,
+    mocked_istio_ingress_requirer,
+):
+    """Test that _configure_app_leader skips submission when ingress is not ready."""
+    # Arrange
+    harness.begin()
+
+    # Mock ingress.is_ready() to return False
+    mocked_istio_ingress_requirer.return_value.is_ready.return_value = False
+
+    # Act
+    harness.charm.ambient_ingress_relation.component._configure_app_leader(None)
+
+    # Assert
+    mocked_istio_ingress_requirer.return_value.submit_config.assert_not_called()
+
+
+def test_ambient_ingress_configure_app_leader_generic_error(
+    harness,
+    mocked_lightkube_client,
+    mocked_kubernetes_service_patch,
+    mocked_istio_ingress_requirer,
+):
+    """Test that _configure_app_leader raises GenericCharmRuntimeError on other exceptions."""
+    from charmed_kubeflow_chisme.exceptions import GenericCharmRuntimeError
+
+    # Arrange
+    harness.begin()
+
+    # Mock ingress.is_ready() to return True and submit_config to raise a generic exception
+    mocked_istio_ingress_requirer.return_value.is_ready.return_value = True
+    mocked_istio_ingress_requirer.return_value.submit_config.side_effect = Exception("Test error")
+
+    # Act & Assert
+    with pytest.raises(GenericCharmRuntimeError) as exc_info:
+        harness.charm.ambient_ingress_relation.component._configure_app_leader(None)
+
+    assert "Failed to submit ingress config" in str(exc_info.value)
+    assert "Test error" in str(exc_info.value)
 
 
 def test_ingress_relation_with_related_app(
@@ -175,7 +230,6 @@ def test_ingress_relation_with_related_app(
 ):
     """Test that the kubeflow-volumes relation sends data to related apps and goes Active."""
     # Arrange
-    harness.set_leader(True)  # needed to write to an SDI relation
     harness.begin()
 
     # Mock:

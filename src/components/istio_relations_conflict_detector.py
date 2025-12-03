@@ -27,11 +27,11 @@ class IstioRelationsConflictDetectorComponent(Component):
 
         if ambient_relation and sidecar_relation:
             logger.error(
-                "Both 'istio-ingress-route' and 'ingress' relations are present, "
-                "remove one to unblock."
+                f"Both '{self.ambient_relation_name}' and '{self.sidecar_relation_name}' "
+                "relations are present, remove one to unblock."
             )
             return BlockedStatus(
-                "Cannot have both 'istio-ingress-route' and 'ingress' relations "
-                "at the same time.",
+                f"Cannot have both '{self.ambient_relation_name}' and "
+                f"'{self.sidecar_relation_name}' relations at the same time."
             )
         return ActiveStatus()

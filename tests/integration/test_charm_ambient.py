@@ -22,6 +22,7 @@ CHARM_NAME = METADATA["name"]
 HEADERS = {
     "kubeflow-userid": "",
 }
+HTTP_PATH = "/volumes"
 
 
 @pytest.mark.abort_on_fail
@@ -90,7 +91,7 @@ async def test_logging(ops_test: OpsTest):
 async def test_ui_is_accessible(ops_test: OpsTest):
     """Verify that UI is accessible through the ingress gateway."""
     await assert_path_reachable_through_ingress(
-        http_path="/volumes",
+        http_path=HTTP_PATH,
         namespace=ops_test.model.name,
         headers=HEADERS,
         expected_content_type="text/html",

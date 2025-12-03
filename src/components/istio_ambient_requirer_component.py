@@ -1,4 +1,7 @@
+import logging
+
 from charmed_kubeflow_chisme.components import Component
+from charmed_kubeflow_chisme.exceptions import GenericCharmRuntimeError
 from charms.istio_beacon_k8s.v0.service_mesh import ServiceMeshConsumer
 from charms.istio_ingress_k8s.v0.istio_ingress_route import (
     BackendRef,
@@ -15,6 +18,8 @@ from charms.istio_ingress_k8s.v0.istio_ingress_route import (
     URLRewriteSpec,
 )
 from ops import ActiveStatus, BlockedStatus
+
+logger = logging.getLogger(__name__)
 
 
 class AmbientIngressRequirerComponent(Component):
@@ -75,9 +80,16 @@ class AmbientIngressRequirerComponent(Component):
         )
         return config
 
+    def _configure_app_leader(self, _):
+        if self.ingress.is_ready():
+            try:
+                self.ingress.submit_config(self._config)
+            except Exception as e:
+                raise GenericCharmRuntimeError(f"Failed to submit ingress config: {e}")
+        else:
+            logger.debug("Ambient ingress relation not ready, skipping config submission.")
+
     def get_status(self):
-        try:
-            self.ingress.submit_config(self._config)
-        except Exception as e:
-            return BlockedStatus(f"Failed to submit ingress config: {e}")
+        if self.ingress.is_ready() and not self._charm.unit.is_leader():
+            return BlockedStatus("Unable to configure ingress, not the leader.")
         return ActiveStatus()
