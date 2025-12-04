@@ -30,6 +30,8 @@ from lightkube.resources.core_v1 import ServiceAccount
 from lightkube.resources.rbac_authorization_v1 import ClusterRole, ClusterRoleBinding
 from ops import CharmBase, main
 
+from components.istio_ambient_requirer_component import AmbientIngressRequirerComponent
+from components.istio_relations_conflict_detector import IstioRelationsConflictDetectorComponent
 from components.pebble_components import KubeflowVolumesInputs, KubeflowVolumesPebbleService
 
 logger = logging.getLogger(__name__)
@@ -97,10 +99,32 @@ class KubeflowVolumesOperator(CharmBase):
             depends_on=[self.leadership_gate],
         )
 
-        self.ingress_relation = self.charm_reconciler.add(
+        self.istio_relations_conflict_detector = self.charm_reconciler.add(
+            component=IstioRelationsConflictDetectorComponent(
+                charm=self,
+                name="istio-relations-conflict-detector",
+                sidecar_relation_name="ingress",
+                ambient_relation_name="istio-ingress-route",
+            ),
+            depends_on=[self.leadership_gate],
+        )
+
+        self.ambient_ingress_relation = self.charm_reconciler.add(
+            component=AmbientIngressRequirerComponent(
+                charm=self,
+                name="ambient_relation:istio-ingress-route",
+                service_name=self.model.app.name,
+                port=int(self.model.config["port"]),
+                path_prefix="/volumes",
+                url_rewrite="/",
+            ),
+            depends_on=[self.leadership_gate, self.istio_relations_conflict_detector],
+        )
+
+        self.sidecar_ingress_relation = self.charm_reconciler.add(
             component=SdiRelationBroadcasterComponent(
                 charm=self,
-                name="relation:ingress",
+                name="sidecar_relation:ingress",
                 relation_name="ingress",
                 data_to_send={
                     "prefix": "/volumes",
@@ -109,7 +133,7 @@ class KubeflowVolumesOperator(CharmBase):
                     "port": int(self.model.config["port"]),
                 },
             ),
-            depends_on=[self.leadership_gate],
+            depends_on=[self.leadership_gate, self.istio_relations_conflict_detector],
         )
 
         self.kubeflow_volumes_container = self.charm_reconciler.add(
