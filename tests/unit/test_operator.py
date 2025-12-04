@@ -116,46 +116,21 @@ def test_kubernetes_created_method(
     assert isinstance(harness.charm.kubernetes_resources.status, ActiveStatus)
 
 
-def test_ambient_ingress_component_active(
+def test_ambient_ingress_component_get_status(
     harness,
     mocked_lightkube_client,
     mocked_kubernetes_service_patch,
     mocked_istio_ingress_requirer,
 ):
-    """Test that ambient ingress component returns ActiveStatus when leader and ingress ready."""
+    """Test that ambient ingress component get_status always returns ActiveStatus."""
     # Arrange
     harness.begin()
-
-    # Mock ingress.is_ready() to return True
-    mocked_istio_ingress_requirer.return_value.is_ready.return_value = True
 
     # Act
     status = harness.charm.ambient_ingress_relation.component.get_status()
 
     # Assert
     assert isinstance(status, ActiveStatus)
-
-
-def test_ambient_ingress_component_blocked_when_not_leader(
-    harness,
-    mocked_lightkube_client,
-    mocked_kubernetes_service_patch,
-    mocked_istio_ingress_requirer,
-):
-    """Test that the ambient ingress component returns BlockedStatus when not leader."""
-    # Arrange
-    harness.set_leader(False)
-    harness.begin()
-
-    # Mock ingress.is_ready() to return True
-    mocked_istio_ingress_requirer.return_value.is_ready.return_value = True
-
-    # Act
-    status = harness.charm.ambient_ingress_relation.component.get_status()
-
-    # Assert
-    assert isinstance(status, BlockedStatus)
-    assert "Unable to configure ingress, not the leader." in status.message
 
 
 def test_ambient_ingress_configure_app_leader_success(

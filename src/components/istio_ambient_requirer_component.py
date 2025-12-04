@@ -17,7 +17,7 @@ from charms.istio_ingress_k8s.v0.istio_ingress_route import (
     URLRewriteFilter,
     URLRewriteSpec,
 )
-from ops import ActiveStatus, BlockedStatus
+from ops import ActiveStatus
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +90,7 @@ class AmbientIngressRequirerComponent(Component):
             logger.debug("Ambient ingress relation not ready, skipping config submission.")
 
     def get_status(self):
-        if self.ingress.is_ready() and not self._charm.unit.is_leader():
-            return BlockedStatus("Unable to configure ingress, not the leader.")
+        # This component depends on LeadershipGateComponent so no need to check for leadership here
+        # If ingress config failed, the `_configure_app_leader` method raises an error
+        # Otherwise simply return ActiveStatus()
         return ActiveStatus()
