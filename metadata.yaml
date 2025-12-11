@@ -10,6 +10,11 @@ source: https://github.com/canonical/kubeflow-volumes-operator
 containers:
   kubeflow-volumes:
     resource: oci-image
+    uid: 584792
+    gid: 584792
+    mounts:
+      - storage: config
+        location: /etc/config
 resources:
   oci-image:
     type: oci-image
@@ -79,3 +84,8 @@ provides:
     description: |
       Access a cross-model application from catalogue via the service mesh.
       This relation provides additional data required by the service mesh to enforce cross-model authorization policies.
+storage:
+  config:
+    type: filesystem
+    minimum-size: 1M
+charm-user: non-root
