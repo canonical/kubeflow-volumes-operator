@@ -6,15 +6,21 @@ from pathlib import Path
 
 import pytest
 import yaml
-from charmed_kubeflow_chisme.testing import assert_logging, deploy_and_assert_grafana_agent
+from charmed_kubeflow_chisme.testing import (
+    assert_logging,
+    assert_security_context,
+    deploy_and_assert_grafana_agent,
+    generate_container_securitycontext_map,
+    get_pod_names,
+)
 from charms_dependencies import ISTIO_GATEWAY, ISTIO_PILOT, KUBEFLOW_DASHBOARD, KUBEFLOW_PROFILES
-from pytest_operator.plugin import OpsTest
 
 # from random import choices
 # from string import ascii_lowercase
 # from subprocess import check_output
 # from time import sleep
-# from lightkube import Client
+from lightkube import Client
+from pytest_operator.plugin import OpsTest
 
 # from selenium.common.exceptions import JavascriptException, WebDriverException
 # from selenium.webdriver.firefox.options import Options
@@ -26,12 +32,14 @@ log = logging.getLogger(__name__)
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 CONFIG_MAP = "volumes-web-app-viewer-spec-ck6bhh4bdm"
 CHARM_NAME = METADATA["name"]
+CONTAINERS_SECURITY_CONTEXT_MAP = generate_container_securitycontext_map(METADATA)
 ISTIO_GATEWAY_APP_NAME = "istio-ingressgateway"
 
-# @pytest.fixture(scope="session")
-# def lightkube_client() -> Client:
-#     client = Client(field_manager=CHARM_NAME)
-#     return client
+
+@pytest.fixture(scope="session")
+def lightkube_client() -> Client:
+    client = Client(field_manager=CHARM_NAME)
+    return client
 
 
 @pytest.mark.abort_on_fail
@@ -104,6 +112,27 @@ async def test_logging(ops_test: OpsTest):
     """Test logging is defined in relation data bag."""
     app = ops_test.model.applications[CHARM_NAME]
     await assert_logging(app)
+
+
+@pytest.mark.parametrize("container_name", list(CONTAINERS_SECURITY_CONTEXT_MAP.keys()))
+async def test_container_security_context(
+    ops_test: OpsTest,
+    lightkube_client: Client,
+    container_name: str,
+):
+    """Test container security context is correctly set.
+
+    Verify that container spec defines the security context with correct
+    user ID and group ID.
+    """
+    pod_name = get_pod_names(ops_test.model.name, CHARM_NAME)[0]
+    assert_security_context(
+        lightkube_client,
+        pod_name,
+        container_name,
+        CONTAINERS_SECURITY_CONTEXT_MAP,
+        ops_test.model.name,
+    )
 
 
 # # Disabled until we re-enable the selenium tests below
