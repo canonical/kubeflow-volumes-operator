@@ -34,6 +34,7 @@ CONFIG_MAP = "volumes-web-app-viewer-spec-ck6bhh4bdm"
 CHARM_NAME = METADATA["name"]
 CONTAINERS_SECURITY_CONTEXT_MAP = generate_container_securitycontext_map(METADATA)
 ISTIO_GATEWAY_APP_NAME = "istio-ingressgateway"
+KUBEFLOW_PROFILES_RELATION_NAME = "kubeflow-profiles"
 
 
 @pytest.fixture(scope="session")
@@ -94,7 +95,10 @@ async def test_relate_dependencies(ops_test: OpsTest):
         trust=KUBEFLOW_PROFILES.trust,
     )
 
-    await ops_test.model.integrate(KUBEFLOW_DASHBOARD.charm, KUBEFLOW_PROFILES.charm)
+    await ops_test.model.integrate(
+        f"{KUBEFLOW_DASHBOARD.charm}:{KUBEFLOW_PROFILES_RELATION_NAME}",
+        f"{KUBEFLOW_PROFILES.charm}:{KUBEFLOW_PROFILES_RELATION_NAME}",
+    )
     await ops_test.model.integrate(
         f"{ISTIO_PILOT.charm}:ingress", f"{KUBEFLOW_DASHBOARD.charm}:ingress"
     )
