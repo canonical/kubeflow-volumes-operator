@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 TEMPLATES_PATH = Path("src/templates")
 K8S_RESOURCE_FILES = [TEMPLATES_PATH / "auth_manifests.yaml.j2"]
 
+CONFIG_YAML_DESTINATION_PATH = "/etc/config/viewer-spec.yaml"
 CONFIG_YAML_TEMPLATE_FILE = TEMPLATES_PATH / "viewer-spec.yaml"
 
 DASHBOARD_LINKS = [
@@ -57,12 +58,6 @@ class KubeflowVolumesOperator(CharmBase):
 
     def __init__(self, *args):
         super().__init__(*args)
-
-        # Storage
-        self._container_name = next(iter(self.meta.containers))
-        _container_meta = self.meta.containers[self._container_name]
-        _storage_name = next(iter(_container_meta.mounts))
-        self._storage_path = Path(_container_meta.mounts[_storage_name].location)
 
         # add links in kubeflow-dashboard sidebar
         self.kubeflow_dashboard_sidebar = KubeflowDashboardLinksRequirer(
@@ -126,7 +121,7 @@ class KubeflowVolumesOperator(CharmBase):
                 files_to_push=[
                     ContainerFileTemplate(
                         source_template_path=CONFIG_YAML_TEMPLATE_FILE,
-                        destination_path=self._storage_path / "viewer-spec.yaml",
+                        destination_path=CONFIG_YAML_DESTINATION_PATH,
                     ),
                 ],
                 inputs_getter=lambda: KubeflowVolumesInputs(
