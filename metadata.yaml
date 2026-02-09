@@ -13,13 +13,13 @@ containers:
     uid: 584792
     gid: 584792
     mounts:
-      - storage: config
-        location: /etc/config
+    - storage: config
+      location: /etc/config
 resources:
   oci-image:
     type: oci-image
     description: 'Backing OCI image'
-    upstream-source: docker.io/charmedkubeflow/volumes-web-app:1.10.0-a526a2e
+    upstream-source: docker.io/charmedkubeflow/volumes-web-app:1.10.0-1ff024c
 requires:
   ingress:
     interface: ingress
