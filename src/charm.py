@@ -145,7 +145,7 @@ class KubeflowVolumesOperator(CharmBase):
                 files_to_push=[
                     ContainerFileTemplate(
                         source_template_path=CONFIG_YAML_TEMPLATE_FILE,
-                        destination_path=self._storage_path / "viewer-spec.yaml",
+                        destination_path=CONFIG_YAML_DESTINATION_PATH,
                     ),
                 ],
                 inputs_getter=lambda: KubeflowVolumesInputs(
