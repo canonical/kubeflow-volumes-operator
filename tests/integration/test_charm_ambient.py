@@ -63,7 +63,10 @@ async def test_deploy_and_relate_dependencies(ops_test: OpsTest):
         trust=KUBEFLOW_PROFILES.trust,
     )
 
-    await ops_test.model.integrate(KUBEFLOW_DASHBOARD.charm, KUBEFLOW_PROFILES.charm)
+    await ops_test.model.integrate(
+        f"{KUBEFLOW_DASHBOARD.charm}:kubeflow-profiles",
+        f"{KUBEFLOW_PROFILES.charm}:kubeflow-profiles",
+    )
     await integrate_with_service_mesh(
         KUBEFLOW_DASHBOARD.charm, ops_test.model, relate_to_ingress=True
     )
