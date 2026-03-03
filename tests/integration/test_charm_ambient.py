@@ -72,7 +72,7 @@ async def test_deploy_and_relate_dependencies(ops_test: OpsTest):
     )
 
     await ops_test.model.integrate(
-        f"{KUBEFLOW_DASHBOARD.charm}:dashboard-links", f"{CHARM_NAME}:dashboard-links"
+        f"{KUBEFLOW_DASHBOARD.charm}:links", f"{CHARM_NAME}:dashboard-links"
     )
 
     # raise_on_blocked=False to avoid flakiness due to kubeflow-dashboard going to
