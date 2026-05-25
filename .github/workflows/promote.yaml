@@ -12,7 +12,6 @@ on:
         required: true
       charm-name:
         description: 'Charm Name'
-        default: 'kubeflow-volumes'
         required: true
 
 jobs:
