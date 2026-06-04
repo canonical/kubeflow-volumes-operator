@@ -184,30 +184,16 @@ jobs:
         run: kubectl logs --tail 100 -n kubeflow -l app.kubernetes.io/name=kubeflow-volumes -c charm
         if: failure()
 
-      - name: Generate inspect tarball
-        run: >
-          sudo microk8s inspect |
-          grep -Po "Report tarball is at \K.+" |
-          sudo xargs -I {} mv {} inspection-report-${{ strategy.job-index }}.tar.gz
-        if: failure()
-
-      - name: Upload inspect tarball
-        uses: actions/upload-artifact@v4
-        with:
-          name: inspection-reports
-          path: ./inspection-report-${{ strategy.job-index }}.tar.gz
-        if: failure()
-
       - name: Upload selenium screenshots
         uses: actions/upload-artifact@v4
         with:
-          name: selenium-screenshots
+          name: selenium-screenshots-${{ matrix.test-type }}
           path: /tmp/selenium-*.png
         if: failure()
 
       - name: Upload HAR logs
         uses: actions/upload-artifact@v4
         with:
-          name: selenium-har
+          name: selenium-har-${{ matrix.test-type }}
           path: /tmp/selenium-*.har
         if: failure()
