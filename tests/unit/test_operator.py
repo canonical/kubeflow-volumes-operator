@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 from charmed_kubeflow_chisme.testing import add_sdi_relation_to_harness
+from charms.istio_ingress_k8s.v0.istio_ingress_route import ProtocolType
 from ops.model import ActiveStatus, BlockedStatus
 from ops.testing import Harness
 
@@ -61,6 +62,25 @@ def render_ingress_data(service, port) -> dict:
         "service": service,
         "port": int(port),
     }
+
+
+@pytest.mark.parametrize("tls_enabled, expected_port", [(False, 80), (True, 443)])
+def test_ambient_ingress_listener_port(
+    harness,
+    mocked_lightkube_client,
+    mocked_kubernetes_service_patch,
+    mocked_istio_ingress_requirer,
+    tls_enabled,
+    expected_port,
+):
+    """Test that the ambient ingress listener uses the correct port based on TLS setting."""
+    mocked_istio_ingress_requirer.return_value.tls_enabled = tls_enabled
+    harness.begin()
+
+    config = harness.charm.ambient_ingress_relation.component._get_ingress_config()
+    assert len(config.listeners) == 1
+    assert config.listeners[0].port == expected_port
+    assert config.listeners[0].protocol == ProtocolType.HTTP
 
 
 def test_log_forwarding(
