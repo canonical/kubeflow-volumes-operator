@@ -341,3 +341,22 @@ def test_istio_relations_conflict_detector_both_relations(
     assert "Cannot have both" in status.message
     assert "istio-ingress-route" in status.message
     assert "ingress" in status.message
+
+
+def test_istio_relations_conflict_detector_multiple_ambient_relations(
+    harness,
+    mocked_lightkube_client,
+    mocked_kubernetes_service_patch,
+    mocked_istio_ingress_requirer,
+):
+    """Test conflict detector handles multiple istio-ingress-route relations without erroring."""
+    # Arrange
+    harness.begin()
+
+    # Act - Add more than one relation on the ambient ingress endpoint
+    harness.add_relation("istio-ingress-route", "istio-ingress")
+    harness.add_relation("istio-ingress-route", "istio-ingress-2")
+
+    # Assert - inspecting the full list of relations per endpoint must not raise
+    status = harness.charm.istio_relations_conflict_detector.component.get_status()
+    assert isinstance(status, ActiveStatus)
