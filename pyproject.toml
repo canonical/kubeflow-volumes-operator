@@ -96,6 +96,7 @@ pytest-operator = "^0.38.0"
 pyyaml = "^6.0.2"
 selenium = "^4.27.1"
 selenium-wire = "^5.1.0"
+tenacity = "^9.0.0"
 
 [project]
 name = "kubeflow-volumes-operator"
