@@ -115,6 +115,7 @@ async def test_deploy_and_relate_dependencies(ops_test: OpsTest):
     # raise_on_blocked=False to avoid flakiness due to kubeflow-dashboard going to
     # Blocked((install) Add required relation to kubeflow-profiles) although it has been added
     await ops_test.model.wait_for_idle(
+        status="active",
         raise_on_blocked=False,
         raise_on_error=True,
         timeout=900,
