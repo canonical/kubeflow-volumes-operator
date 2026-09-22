@@ -115,6 +115,9 @@ async def test_deploy_and_relate_dependencies(ops_test: OpsTest):
     # raise_on_blocked=False to avoid flakiness due to kubeflow-dashboard going to
     # Blocked((install) Add required relation to kubeflow-profiles) although it has been added
     await ops_test.model.wait_for_idle(
+        # grafana-agent-k8s remains blocked because this test does not provide its required
+        # grafana-cloud-config or logging-consumer relation for the logging-provider endpoint.
+        [app for app in ops_test.model.applications if app != "grafana-agent-k8s"],
         status="active",
         raise_on_blocked=False,
         raise_on_error=True,
