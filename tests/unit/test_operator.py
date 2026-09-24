@@ -221,6 +221,22 @@ def test_ambient_ingress_configure_app_leader_generic_error(
     assert "Test error" in str(exc_info.value)
 
 
+def test_ambient_ingress_relation_changed_submits_config(
+    harness,
+    mocked_lightkube_client,
+    mocked_kubernetes_service_patch,
+    mocked_istio_ingress_requirer,
+):
+    """Test that a changed ready ingress relation triggers config submission."""
+    harness.begin()
+    mocked_istio_ingress_requirer.return_value.is_ready.return_value = True
+
+    relation_id = harness.add_relation("istio-ingress-route", "istio-ingress")
+    harness.update_relation_data(relation_id, "istio-ingress", {"ready": "true"})
+
+    mocked_istio_ingress_requirer.return_value.submit_config.assert_called_once()
+
+
 def test_ingress_relation_with_related_app(
     harness,
     mocked_lightkube_client,
